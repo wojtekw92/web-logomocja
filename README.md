@@ -1,5 +1,9 @@
 # Logomocja w przeglądarce
 
+[![Testy i GitHub Pages](https://github.com/wojtekw92/web-logomocja/actions/workflows/pages.yml/badge.svg)](https://github.com/wojtekw92/web-logomocja/actions/workflows/pages.yml)
+
+### ▶ Uruchom online: **https://wojtekw92.github.io/web-logomocja/**
+
 Wierna, przeglądarkowa implementacja **Logomocji**, czyli polskiej edycji **Imagine Logo**.
 Pisze się w niej po polsku (`naprzód 100`, `powtórz 4 [np 50 pw 90]`, `oto … już`). Działają też
 angielskie nazwy z Imagine (`forward`, `repeat`, `to … end`), więc programy z angielskiego Imagine
@@ -9,6 +13,10 @@ Całość to czysty JavaScript (moduły ES) bez żadnych zależności i bez krok
 zwykły serwer plików statycznych.
 
 ## Uruchomienie
+
+Najprościej: otwórz **https://wojtekw92.github.io/web-logomocja/** — nic nie trzeba instalować.
+
+Lokalnie:
 
 ```sh
 cd komeniusz-imagine
@@ -182,3 +190,11 @@ Znane braki interpretera:
 | `docs/` | słownik języka, architektura, notatki o API, kontrakt elementów interfejsu |
 | `examples/` | przykładowe programy |
 | `tests/` | testy (`node --test`) |
+
+## Publikacja (GitHub Pages)
+
+Każdy push na gałąź `main` uruchamia workflow `.github/workflows/pages.yml`: najpierw `npm test`,
+a gdy testy przejdą, strona jest publikowana pod adresem
+<https://wojtekw92.github.io/web-logomocja/>.
+
+Jednorazowa konfiguracja w repozytorium: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
