@@ -52,7 +52,7 @@ export function toNumber(v, who) {
     const s = v.trim().replace(',', '.')
     if (NUM_RE.test(s)) return Number(s)
   }
-  throw new LogoError(`${who ? who + ': ' : ''}${formatValue(v)} nie jest liczbą`)
+  throw badInput(who, v, 'nie jest liczbą')
 }
 
 export function toBool(v, who) {
@@ -69,7 +69,20 @@ export function toBool(v, who) {
     const p = toNumber(v)
     return p <= 0 ? false : p >= 1 ? true : Math.random() < p
   }
-  throw new LogoError(`${who ? who + ': ' : ''}${formatValue(v)} nie jest wartością logiczną`)
+  throw badInput(who, v, 'nie jest wartością logiczną')
+}
+
+/**
+ * Wrong-input error per PRIMITYWY.md §15: `X nie lubi Y jako danej`.
+ * Without `who`, the message is provisional (`Y nie jest liczbą`) and the error is flagged
+ * `needsWho`; the interpreter rewrites it with the name of the primitive being called.
+ */
+export function badInput(who, v, fallback = 'nie jest poprawną daną') {
+  const shown = formatValue(v) === '' ? '"' : formatValue(v)
+  if (who) return new LogoError(`${who} nie lubi ${shown} jako danej`, { value: v })
+  const e = new LogoError(`${shown} ${fallback}`, { value: v })
+  e.needsWho = true
+  return e
 }
 
 export const fromBool = (b) => (b ? TRUE : FALSE)

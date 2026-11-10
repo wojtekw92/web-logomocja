@@ -3,7 +3,7 @@
 Goal: a faithful, complete browser implementation of **Logomocja** (the Polish edition of
 Imagine Logo, by Komeniusz), using vanilla ES modules, no build step, no runtime dependencies.
 Runs by opening `index.html` through any static server (`npx serve .` / `python3 -m http.server`).
-Tests run with `node --test tests/` (Node 20+, `node:test` + `node:assert`). `package.json` has
+Tests run with `npm test` (Node 20+, `node:test` + `node:assert`). `package.json` has
 `"type": "module"` and `"test": "node --test tests/"`.
 
 The language reference (Polish primitive names, aliases, semantics, error messages) lives in
