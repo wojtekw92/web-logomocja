@@ -1,0 +1,36 @@
+; Zadanie w stylu konkursu LOGIA
+; Zadanie 1 (grafika): napisz procedurę szachownica :n :bok, która rysuje szachownicę
+;   n x n o polach o boku :bok. Lewe dolne pole jest czarne, szachownica jest na środku strony.
+; Zadanie 2 (liczby): napisz funkcję suma.cyfr :n i wypisz wszystkie liczby od 1 do 100,
+;   których suma cyfr wynosi 10.
+
+oto pole :bok :kolor
+  ukp "czarny
+  ukm :kolor
+  wielokąt [powtórz 4 [np :bok pw 90]]
+  powtórz 4 [np :bok pw 90]
+już
+
+oto szachownica :n :bok
+  niech "x0 :n * :bok / -2
+  dla "w [1 :n] [
+    dla "k [1 :n] [
+      pod ustalPoz lista :x0 + (:k - 1) * :bok :x0 + (:w - 1) * :bok skieruj 0 opu
+      jeżeli 0 = reszta :w + :k 2 [pole :bok "czarny] [pole :bok "biały]
+    ]
+  ]
+  pod wróć opu
+już
+
+oto suma.cyfr :n
+  jeśli :n < 10 [wynik :n]
+  wynik (reszta :n 10) + suma.cyfr ilorazc :n 10
+już
+
+oto starter
+  czyść
+  szachownica 8 50
+  schowajMnie
+  pisz [Liczby od 1 do 100 o sumie cyfr 10:]
+  pisz filtruj [10 = suma.cyfr :%] generuj 100 [:% + 1] 1
+już

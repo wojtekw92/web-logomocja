@@ -210,3 +210,98 @@ The core is written and works: reader, parser, interpreter, facade and tests. Al
 - In an unquoted word, a `\`-escaped operator character can still be split when the list is run.
 - A missing `już` at end of text is accepted and ends the definition there, rather than raising an error.
 - Each logical line runs separately, so parentheses cannot span lines unless joined with `~`.
+
+---
+
+## Integration changes (after all builders)
+
+**Core (`interpreter.js`)**, new primitive spec flags:
+- `tailList: true`: set on `jeśli`, `jeżeli`, `uruchom`, `jeśliTak` and `jeśliNie`. When such a call
+  is the last instruction of a procedure, `runList` runs its list in tail position, so
+  `jeśli :n > 0 [ruch :n - 1]` recurses in constant stack.
+- `discardable: true`: handled natively. `Interpreter.prototype.supportsDiscardable = true`, so the
+  wrapper in objects.js is switched off.
+  - The value is dropped when it is exactly the last value a discardable primitive returned in the
+    same process, including through `jeśli` and `uruchom`.
+  - Helper: `interp.dropValue(v, ctx)`.
+- `extraQuotedArg: true`: takes one more input when the next token is a quoted word. Set on
+  `redaguj` and `zapiszProjekt`.
+- `listStopsArgs: true`: no further inputs are taken when the first one is a list. Set on `niech`.
+- `interp.abort({silent: true})` interrupts the run without printing `Zatrzymano!`. Used by
+  `poziomGłówny` and `zakończ`.
+
+**Parser.** One-line `oto kw :b powtórz 4 [np :b pw 90] już` is accepted (extension):
+- the first header item that is not `:x` or `[...]` starts the body;
+- `needsMoreInput` knows this form.
+
+**RNG** (`values.js`):
+- `random()`, `randomInt(n)` and `setRandom(fn)` are exported.
+- math.js installs its seedable PRNG at load.
+- `toBool`, `interp.num`, `jld` in colors.js, the turtle ranges and objects all use it, so
+  `losujOdNowa` covers every `jld`.
+
+**Graphics (`world.js`):**
+- `World#attachInterpreter(interp)` is native. It sets `world.interp` and calls every
+  `World.attachHooks` callback; objects.js registers `setupWorld` there.
+- `Page#setSetting(name, v)` handles `kolTła`, `rozmiar` and `stylZakresu`.
+- Pages created by World know their world as `page.world`.
+
+**Prims:**
+- `turtle.js`: `ustalPoz`, `ustalPozx`, `ustalPozy`, `ustalXY`, `pokażMnie`, `schowajMnie`,
+  `ustalWidoczny`, `poz`, `pozx`, `pozy` and `widoczny`, sent to a widget with apostrophe syntax
+  (`prz1'…`), use that widget's settings.
+- `uiObject` ignores the widget whose own event handler is running, so the handler's turtle and
+  page commands reach the turtles and the page.
+- `variables.js`: `ustaw "postać <drawing list>` goes through `ustalPostać`.
+
+---
+
+## Fixer pass (verified defects)
+
+- **Clipping to the turtle range (§2.5, §2.7 `okno`).** Surfaces have `withClip(bounds, fn)`
+  (`HeadlessSurface`, `CanvasSurface`). `Turtle#clipped(fn)` runs `fn` clipped to `t.bounds()`
+  when the turtle has its own range. Every turtle drawing path (lines, `okrąg`, `koło`, `kropka`,
+  `pkt`, `elipsa`, `łuk`, `wielokąt`, `rysuj`, `obrys`, `napisz`, `stempluj`, `stemplujObraz`)
+  goes through it. New drawing code in prims must wrap surface calls in `t.clipped(() => …)`.
+- **Pen up:** `koło` and `elipsaZamalowana` now draw nothing when the pen is up, matching
+  `okrąg`/`elipsa` and the note above.
+- **Apostrophe calls (§1.3):** the inputs of `ż2'X args` are evaluated in the addressee's
+  context, exactly like `proszę "ż2 [X args]`. So `ż2'ustalPoz poz` means ż2's own `poz`; to
+  pass the caller's position, use `ż2'ustalPoz ż1'poz` or a variable. The caller's local
+  variables (`:x`) are still visible.
+- **Settings in name resolution:**
+  - Step 5 (`selfVar`) also returns `self.getSetting(name)`, so `suw1'pionowy` works.
+  - UI objects (Widget, `addressedSettingsFirst`) addressed explicitly with an apostrophe have
+    their settings take priority over primitives: `suw1'min`, `suw1'maks`, `suw1'wartość`.
+  - Inside `proszę "suw1 [...]`, the primitives `min`/`maks`/`wartość` still win (§17.5 order).
+- **Parentheses:**
+  - An unmatched `)` is now reported before the line runs.
+  - Nesting deeper than 800 parentheses gives `Za mało pamięci (za głęboka rekurencja)`.
+  - Outside any procedure, that message has no ` w ?` suffix.
+  - Inside list literals, parentheses are now ordinary word characters (`[(a b)]` has 2 elements).
+    `runparse` still splits them out when the list is run. `parseSettings` (objects.js) joins
+    items until the parentheses balance.
+- **Missing `już` at the end of the text:**
+  - It is still accepted, but `sourceText`/`procedureSource` now always end with `już`.
+  - `ui/project.js` gains `repairMissingEnds(source)`, applied by `parseProject` for old saves.
+  - `globalsSource(source)` returns the top-level `przypisz` lines as whole logical lines.
+    main.js uses it for autosave restore and `ładujProjekt`.
+- **Keyboard:** `io.readChar()` and `io.readKey()` both return the key *name*. `czytajKlawisz`
+  uses `io.readKey` when it exists. `czytajZnak` maps `Enter` (and `\n`) to `\r` (13) on
+  every path.
+- **Errors:**
+  - `formatError` no longer appends ` w procedurze X` when the message already ends with it.
+  - A bare `:` gives `Nie wiem jak wykonać :`.
+- **Not fixed; needs an owner decision (page edges).**
+  - `pozA`/`lewyGórny`/`ustalPozA` use `floor(w/2)`/`floor(h/2)` and so report pixel centres.
+    `pozA` of [0 0] is [398 249], `lewyGórny` is [-398 249], and tests/turtle.test.js encodes
+    this.
+  - Turtle `bounds()` (`płot`, wrapping) use ±w/2 and ±h/2, that is x ±398 and y ±249.5.
+  - Real pixel geometry for 796×499:
+    - pixel centres run from x −398 to 397 and from y −249 to 249;
+    - pixel edges are at x −398.5/397.5 and y ±249.5.
+  - So y bounds sit on the edges, while x bounds are neither centres nor edges. The owners of
+    turtle.js and prims/turtle.js must pick one convention.
+- **Parentheses after a quoted or bar word inside a list** (`[(słowo "a "b)]`) are still read
+  as a separate word. Quoted words are never split by `runparse`. Such a list prints as
+  `[(słowo "a "b )]`.

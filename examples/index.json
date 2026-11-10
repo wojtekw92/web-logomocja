@@ -1,0 +1,19 @@
+[
+  { "file": "01_kwadrat_wielokaty.lgm", "title": "Kwadrat i wielokąty foremne", "description": "Procedury z parametrami, pętle powtórz i dla, zamalowywanie." },
+  { "file": "02_spirale.lgm", "title": "Spirale", "description": "Spirala kwadratowa rysowana rekurencyjnie i tęczowa spirala sześciokątna." },
+  { "file": "03_drzewo.lgm", "title": "Drzewo fraktalne", "description": "Rekurencyjne drzewo: każda gałąź kończy się dwiema mniejszymi." },
+  { "file": "04_platek_kocha.lgm", "title": "Płatek Kocha", "description": "Fraktal Kocha czwartego stopnia, zamalowany od środka." },
+  { "file": "05_gwiazdy.lgm", "title": "Gwiazdy w kolorach", "description": "Nocne niebo: losowe położenie, kolor i rozmiar (jld, losowa) oraz wypełniony wielokąt." },
+  { "file": "06_rozeta.lgm", "title": "Rozeta", "description": "Płatki z łuków i rozeta z okręgów." },
+  { "file": "07_zegar.lgm", "title": "Zegar animowany", "description": "Tarcza z napisami i wskazówki przerysowywane co sekundę w procesie równoległym (co)." },
+  { "file": "08_wyscig_zolwi.lgm", "title": "Wyścig żółwi", "description": "Kilka żółwi: składnia apostrofowa, proszę, słuchaj, każdy i linia tła." },
+  { "file": "09_gra_lapanie.lgm", "title": "Gra: złap gwiazdkę", "description": "Zdarzenia gdyKlik i gdyKlawisz: klikaj gwiazdkę albo dojedź do niej strzałkami." },
+  { "file": "10_suwak_kat.lgm", "title": "Suwak sterujący kątem", "description": "Suwak (gdyZmieniasz) zmienia kąt obrotu gwiazdy; nazwa suwaka daje jego wartość." },
+  { "file": "11_przyciski.lgm", "title": "Przyciski", "description": "Przyciski ze zdarzeniem gdyWciśnięty rysują figury w losowych miejscach." },
+  { "file": "12_slowa_i_listy.lgm", "title": "Słowa i listy", "description": "Odwracanie słowa, palindromy, sortowanie przez wybieranie, samogłoski i szyfr Cezara." },
+  { "file": "13_logia_szachownica.lgm", "title": "Zadanie LOGIA: szachownica", "description": "Zadanie w stylu konkursu LOGIA: szachownica n×n i funkcja suma.cyfr." },
+  { "file": "14_kolorowe_banki.lgm", "title": "Kolorowe bańki", "description": "Losowe koła wypełnione losowymi kolorami na czarnym tle." },
+  { "file": "15_pilki.lgm", "title": "Odbijające się piłki", "description": "Trzy żółwie-piłki ze stylem zakresu odbij, poruszane w procesie bezKońca." },
+  { "file": "16_rekurencja_liczby.lgm", "title": "Silnia i Fibonacci", "description": "Funkcje rekurencyjne z wynik i jeżeli, tabelka i wykres słupkowy." },
+  { "file": "17_motyle.lgm", "title": "Motyle: własna klasa", "description": "nowaKlasa, wiele jednostek w ruchu i zdarzenie gdyKlik usuwające klikniętego motyla." }
+]

@@ -1,0 +1,25 @@
+; Spirale
+; Spirala kwadratowa rysowana rekurencyjnie i kolorowa spirala z pętlą dla.
+
+; rekurencja: każdy kolejny odcinek jest dłuższy o :przyrost
+oto spirala :bok :kąt :przyrost
+  jeśli :bok > 180 [stop]
+  np :bok pw :kąt
+  spirala :bok + :przyrost :kąt :przyrost
+już
+
+oto spirala.kolorowa :ile
+  dla "i [1 :ile] [ukp element 1 + reszta :i 6 [czerwony pomarańczowy żółty zielony niebieski fioletowy] np :i * 1.5 pw 59]
+już
+
+oto starter
+  czyść
+  schowajMnie
+  pod ustalPoz [-200 0] skieruj 0 opu
+  ukp "ciemnoniebieski
+  spirala 2 90 3
+  pod ustalPoz [200 0] skieruj 0 opu
+  ugp 2
+  spirala.kolorowa 120
+  pokażMnie
+już

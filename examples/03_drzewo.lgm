@@ -1,0 +1,22 @@
+; Drzewo fraktalne
+; Klasyczny przykład rekurencji: każda gałąź kończy się dwiema mniejszymi gałęziami.
+
+oto drzewo :dł :poziom
+  jeśli :poziom = 0 [stop]
+  ugp :poziom
+  jeśli :poziom < 3 [ukp "zielony] [ukp "brązowy]
+  np :dł
+  lw 25
+  drzewo :dł * 0.7 :poziom - 1
+  pw 50
+  drzewo :dł * 0.7 :poziom - 1
+  lw 25
+  pod ws :dł opu
+już
+
+oto starter
+  czyść
+  pod ustalPoz [0 -230] skieruj 0 opu
+  drzewo 120 9
+  schowajMnie
+już

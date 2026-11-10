@@ -1,0 +1,28 @@
+; Gwiazdy w kolorach
+; Nocne niebo pełne gwiazd: losowe położenie (jld), losowy kolor i rozmiar.
+
+oto gwiazda :bok
+  powtórz 5 [np :bok pw 144]
+już
+
+; gwiazda wypełniona kolorem malowania (wielokąt z listy rysującej)
+oto gwiazda.pełna :bok
+  wielokąt [powtórz 5 [np :bok pw 144]]
+już
+
+oto starter
+  ustalKolTła "ciemnoniebieski
+  czyść
+  schowajMnie
+  ugp 2
+  powtórz 25 [
+    pod ustalPoz jld skieruj losowa 72 opu
+    ukp jld
+    gwiazda 15 + losowa 40
+  ]
+  pod ustalPoz [-60 -20] skieruj 0 opu
+  ukp "żółty
+  ukm "żółty
+  gwiazda.pełna 150
+  pokażMnie
+już

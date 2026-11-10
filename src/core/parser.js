@@ -52,12 +52,21 @@ export function parse(source) {
     }
     // definition
     const header = L
-    const def = parseHeader(header.items, header.line)
+    const split = splitOneLine(header.items)
+    const def = parseHeader(split ? split.head : header.items, header.line)
     const bodyLs = []
     const lineNumbers = []
     let endLine = null
     k++
-    while (k < lines.length) {
+    if (split) {
+      // one-line form `oto kw :b powtórz 4 [np :b pw 90] już` (body may also continue below)
+      if (split.body.length) {
+        bodyLs.push(split.body)
+        lineNumbers.push(header.line)
+      }
+      if (split.closed) endLine = header
+    }
+    while (!endLine && k < lines.length) {
       const B = lines[k]
       const f = B.items[0]
       if (isEnd(f)) { endLine = B; k++; break }
@@ -70,6 +79,9 @@ export function parse(source) {
     }
     const last = endLine ?? lines[k - 1] ?? header
     def.sourceText = src.slice(header.start, last.end)
+    // accepted without `już` at the end of the text: the stored source must still be complete,
+    // otherwise joining sources (project files, autosave, editor) breaks the next definition
+    if (!endLine) def.sourceText = def.sourceText.replace(/\s+$/, '') + '\njuż'
     finishDef(def, bodyLs, lineNumbers)
     definitions.push(def)
   }
@@ -84,6 +96,35 @@ function appendItems(out, items) {
     out.push(items[i])
     if (isMarkedLiteral(items, i)) markLiteral(out, base + i)
   }
+}
+
+const isHeaderItem = (it) =>
+  Array.isArray(it) || typeof it === 'number' || (typeof it === 'string' && it[0] === ':' && it.length > 1)
+
+/** Copy items[from..to) keeping the lexer's literal marks. */
+function sliceItems(items, from, to = items.length) {
+  const out = []
+  for (let i = from; i < to; i++) {
+    out.push(items[i])
+    if (isMarkedLiteral(items, i)) markLiteral(out, out.length - 1)
+  }
+  return out
+}
+
+/**
+ * Header line with instructions after the inputs (`oto kw :b powtórz 4 [...] już`): returns
+ * {head, body, closed} or null for an ordinary header. Header lists (`[2]`, `[:b 5]`) are accepted
+ * only before the first instruction word.
+ */
+export function splitOneLine(items) {
+  if (items.length < 3) return null
+  let i = 2
+  while (i < items.length && isHeaderItem(items[i]) && !isMarkedLiteral(items, i)) i++
+  if (i >= items.length) return null
+  const closed = isEnd(items[items.length - 1]) && !isMarkedLiteral(items, items.length - 1)
+  const head = sliceItems(items, 0, i)
+  const body = sliceItems(items, i, closed ? items.length - 1 : items.length)
+  return { head, body, closed }
 }
 
 /** Parse `oto nazwa :a :b [:c 5] [:reszta] [2]` (items include the leading `oto`). */
@@ -230,7 +271,7 @@ export function needsMoreInput(source) {
   let open = false
   for (const L of lines) {
     const f = L.items[0]
-    if (isStart(f)) open = true
+    if (isStart(f)) open = !splitOneLine(L.items)?.closed
     else if (isEnd(f)) open = false
   }
   return open

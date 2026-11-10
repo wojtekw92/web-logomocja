@@ -46,6 +46,7 @@ export const isSignal = (e) =>
 export function formatError(err) {
   if (err instanceof AbortSignal) return 'Zatrzymano!'
   const msg = err && err.message !== undefined ? String(err.message) : String(err)
-  const where = err?.procedure && !msg.endsWith(` w ${err.procedure}`) ? ` w procedurze ${err.procedure}` : ''
+  const where = err?.procedure && !msg.endsWith(` w ${err.procedure}`) && !msg.endsWith(` w procedurze ${err.procedure}`)
+    ? ` w procedurze ${err.procedure}` : ''
   return msg + where + (err?.hint ? '\n' + err.hint : '')
 }

@@ -1,0 +1,39 @@
+; Wyścig żółwi
+; Kilka żółwi naraz: składnia apostrofowa (ż2'np 10), proszę, słuchaj i każdy.
+
+oto start :ż :x :kolor
+  proszę :ż [pod ustalPoz lista :x -200 skieruj 0 opu ukp :kolor ugp 3]
+już
+
+oto krok.wyścigu
+  dlaKażdego "ż [ż1 ż2 ż3] [proszę :ż [np 1 + losowa 8]]
+  dlaKażdego "ż [ż1 ż2 ż3] [jeśli (proszę :ż [pozy]) > 150 [przypisz "zwycięzca :ż]]
+już
+
+oto wyścig
+  odnowa
+  nowy "Żółw []
+  nowy "Żółw []
+  start "ż1 -150 "czerwony
+  start "ż2 0 "niebieski
+  start "ż3 150 "zielony
+  ; meta: linia tła na wysokości 150
+  ustalGrubośćLiniiTła 2
+  liniaTła [[-250 150] [250 150]]
+  ; każdy żółw podpisuje się swoim imieniem
+  ż1'napisz "ż1
+  ż2'napisz "ż2
+  ż3'napisz "ż3
+  przypisz "zwycięzca "
+  dopóki [puste? :zwycięzca] [krok.wyścigu]
+  (pisz "Wygrał :zwycięzca)
+  ; zwycięzca robi rundę honorową, pozostali obracają się w miejscu
+  proszę :zwycięzca [ugp 1 powtórz 36 [np 4 pw 10]]
+  słuchaj [ż1 ż2 ż3]
+  każdy [pw 360]
+  słuchaj "ż1
+już
+
+oto starter
+  wyścig
+już

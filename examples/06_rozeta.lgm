@@ -1,0 +1,29 @@
+; Rozeta
+; Płatki z łuków oraz rozeta z okręgów (okrąg przyjmuje średnicę).
+
+; płatek z dwóch łuków po 90 stopni
+oto płatek :krok
+  powtórz 2 [powtórz 90 [np :krok pw 1] pw 90]
+już
+
+oto rozeta :n
+  powtórz :n [płatek 2 pw 360 / :n]
+już
+
+oto rozeta.okręgów :n :średnica
+  powtórz :n [pod np :średnica / 2 opu okrąg :średnica pod ws :średnica / 2 opu pw 360 / :n]
+już
+
+oto starter
+  czyść
+  schowajMnie
+  pod ustalPoz [-190 0] skieruj 0 opu
+  ukp "purpurowy
+  ugp 2
+  rozeta 12
+  pod ustalPoz [190 0] skieruj 0 opu
+  ukp "ciemnozielony
+  ugp 1
+  rozeta.okręgów 18 150
+  pokażMnie
+już

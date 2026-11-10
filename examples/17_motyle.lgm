@@ -1,0 +1,20 @@
+; Motyle - własna klasa i zdarzenia
+; nowaKlasa tworzy klasę Motyl; każdy motyl lata w osobnym procesie,
+; a kliknięty motyl znika (zdarzenie gdyKlik i usuńObiekt mojaNazwa).
+
+oto lot
+  proszę wszystkieZ "Motyl [np 3 pw losowa 25 lw losowa 25]
+  jeśli puste? wszystkieZ "Motyl [pisz [Brawo! Wszystkie motyle złapane.] zatrzymajMnie]
+  czekaj 30
+już
+
+oto starter
+  odnowa
+  czyść
+  ż1'schowajMnie
+  jeśli nie klasa? "Motyl [nowaKlasa "Żółw "Motyl [postać gwiazda pisak pod gdyKlik [usuńObiekt mojaNazwa]]]
+  powtórz 8 [nowy "Motyl (lista "poz jld "kierunek jld)]
+  proszę wszystkieZ "Motyl [ustalStylZakresu "odbij ustalKolPostaci jld]
+  bezKońca [lot]
+  pisz [Klikaj motyle, żeby je złapać!]
+już

@@ -1,0 +1,18 @@
+; Kolorowe bańki
+; Losowe koła: położenie, kolor i rozmiar podaje jld ("jak los da") oraz losowa.
+
+oto bańka
+  pod ustalPoz jld opu
+  ukp jld
+  ukm jld
+  koło 10 + losowa 70
+już
+
+oto starter
+  ustalKolTła "czarny
+  czyść
+  schowajMnie
+  ugp 2
+  powtórz 60 [bańka]
+  pokażMnie
+już

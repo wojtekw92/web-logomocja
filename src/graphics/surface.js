@@ -24,6 +24,8 @@
 //   image(img, x, y, style)            img = shape/image source; style {heading, scale, width, height}
 //   stamp(shape, x, y, style)          draw a turtle shape (shapes.js) onto the drawing layer
 //   drawTurtles(turtles)               overlay rendering (no-op on headless)
+//   withClip(bounds, fn)               run fn() with drawing limited to the logo rectangle
+//                                      bounds [x1,y1,x2,y2] (turtle range, §2.5/§2.7); returns fn()
 import { makeColor, WHITE } from './colors.js'
 
 /** Logo → pixel (CSS px). Logo (0,0) maps to the centre of a pixel, so 1px lines stay crisp. */
@@ -108,6 +110,13 @@ export function ellipsePoints(x, y, rx, ry, { rotation = 0, start = 0, end = 360
   return pts
 }
 
+/** Logo rectangle → inclusive pixel box [x0,y0,x1,y1] (pixels whose centre lies inside). */
+export function rectToPixelBox(bounds, width, height) {
+  const [ax, ay] = logoToPixel(Math.min(bounds[0], bounds[2]), Math.max(bounds[1], bounds[3]), width, height)
+  const [bx, by] = logoToPixel(Math.max(bounds[0], bounds[2]), Math.min(bounds[1], bounds[3]), width, height)
+  return [Math.ceil(ax - 0.5), Math.ceil(ay - 0.5), Math.floor(bx - 0.5), Math.floor(by - 0.5)]
+}
+
 const approxTextWidth = (str, size) => String(str).length * size * 0.6
 
 /**
@@ -158,6 +167,8 @@ export class HeadlessSurface {
   // --- pixel helpers ---
   _put(px, py, c, mode, bg) {
     if (px < 0 || py < 0 || px >= this.width || py >= this.height) return
+    const k = this._clipBox
+    if (k && (px < k[0] || py < k[1] || px > k[2] || py > k[3])) return
     const i = (py * this.width + px) * 4, d = this.data
     if (mode === 'reverse') {
       const b = bg || this.background
@@ -257,13 +268,18 @@ export class HeadlessSurface {
     this.ops.push({ op: 'fill', x, y, color, bounds })
     if (!this.data) return 0
     const [px, py] = this.toPixel(x, y)
-    let box
-    if (bounds) {
-      const [ax, ay] = this.toPixel(Math.min(bounds[0], bounds[2]), Math.max(bounds[1], bounds[3]))
-      const [bx, by] = this.toPixel(Math.max(bounds[0], bounds[2]), Math.min(bounds[1], bounds[3]))
-      box = [Math.ceil(ax - 0.5), Math.ceil(ay - 0.5), Math.floor(bx - 0.5), Math.floor(by - 0.5)]
-    }
+    const box = bounds ? rectToPixelBox(bounds, this.width, this.height) : undefined
     return floodFill(this.data, this.width, this.height, Math.floor(px), Math.floor(py), color, box)
+  }
+
+  /** Run fn() with every pixel write limited to the logo rectangle `bounds` (null = no limit). */
+  withClip(bounds, fn) {
+    if (!bounds) return fn()
+    const prev = this._clipBox
+    let box = rectToPixelBox(bounds, this.width, this.height)
+    if (prev) box = [Math.max(box[0], prev[0]), Math.max(box[1], prev[1]), Math.min(box[2], prev[2]), Math.min(box[3], prev[3])]
+    this._clipBox = box
+    try { return fn() } finally { this._clipBox = prev }
   }
 
   getPixel(x, y) {

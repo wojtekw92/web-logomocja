@@ -1,0 +1,55 @@
+; Zegar animowany
+; Tarcza rysowana raz, a wskazówki co sekundę przerysowuje osobny proces (co 1000 [...]).
+; Wiersz poleceń pozostaje wolny. Zegar zatrzymasz przyciskiem Zatrzymaj (albo klawiszem Esc lub F12).
+
+oto tarcza
+  czyść
+  schowajMnie
+  ugp 3
+  ukp "ciemnoniebieski
+  okrąg 300
+  dla "g [1 12] [
+    pod wróć pw :g * 30 np 135 opu
+    kropka 10
+    pod ws 22 ustalPoz poz - [5 7] skieruj 0 opu
+    napisz :g
+  ]
+  pod wróć opu
+już
+
+; rysuje (albo ściera) jedną wskazówkę
+oto wskazówka :kąt :dł :grubość :kolor :pisak
+  pod wróć pw :kąt
+  ukp :kolor
+  ugp :grubość
+  ustalPisak :pisak
+  np :dł
+  opu
+już
+
+oto wskazówki :t :pisak
+  niech "h element 1 :t
+  niech "m element 2 :t
+  niech "s element 3 :t
+  niech "dodatek 0
+  jeśli :pisak = "ścier [niech "dodatek 2]
+  wskazówka (reszta :h 12) * 30 + :m / 2 65 6 + :dodatek "czarny :pisak
+  wskazówka :m * 6 + :s / 10 95 4 + :dodatek "ciemnoniebieski :pisak
+  wskazówka :s * 6 100 1 + :dodatek "czerwony :pisak
+  pod wróć opu
+  ukp "czarny
+  kropka 12
+już
+
+oto tik
+  jeśli nie puste? :poprzedni [wskazówki :poprzedni "ścier]
+  przypisz "poprzedni czas
+  wskazówki :poprzedni "opu
+już
+
+oto starter
+  tarcza
+  przypisz "poprzedni []
+  tik
+  co 1000 [tik]
+już

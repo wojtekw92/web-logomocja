@@ -589,10 +589,14 @@ test('extension primitives may be redefined by the user; others may not', async 
   assert.deepEqual(errors, ['suma jest procedurą pierwotną'])
 })
 
-test('oto header accepts only :inputs and [..]', async () => {
-  const { run, errors } = setup()
-  await run('oto kw :b powtórz 4 [np :b] już')
-  assert.deepEqual(errors, ['oto nie lubi powtórz jako danej'])
+test('one-line oto: instructions after the inputs become the body (integration extension)', async () => {
+  const { run, errors, out } = setup()
+  await run('oto kw :b powtórz 4 [np :b] już\noto starter pisz "start już\nstarter')
+  assert.deepEqual(errors, [])
+  assert.deepEqual(out, ['start'])
+  // header lists are still accepted before the first instruction
+  await run('oto x :a [1] pisz :a już\n(x 7)')
+  assert.deepEqual(out, ['start', '7'])
 })
 
 test('a stopped context cannot spawn processes', async () => {

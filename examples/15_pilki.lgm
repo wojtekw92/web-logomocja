@@ -1,0 +1,18 @@
+; Odbijające się piłki
+; Trzy żółwie-piłki ze stylem zakresu odbij. Osobny proces (bezKońca) porusza je bez końca.
+; Zatrzymaj przyciskiem Zatrzymaj (albo klawiszem Esc lub F12).
+
+oto nowa.piłka :nazwa :kolor
+  nowy "Żółw (lista "nazwa :nazwa "poz jld "kierunek jld "postać "koło)
+  proszę :nazwa [ustalStylZakresu "odbij ukp :kolor ugp 2 ustalKolPostaci :kolor]
+już
+
+oto starter
+  odnowa
+  czyść
+  ż1'schowajMnie
+  nowa.piłka "piłka1 "czerwony
+  nowa.piłka "piłka2 "niebieski
+  nowa.piłka "piłka3 "zielony
+  bezKońca [proszę [piłka1 piłka2 piłka3] [np 4] czekaj 20]
+już

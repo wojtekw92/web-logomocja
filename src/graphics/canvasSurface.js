@@ -4,7 +4,7 @@
 // the contexts are scaled by dpr, all API coordinates are Logo coordinates.
 // No top-level DOM access, so this module can be imported (but not instantiated) in Node.
 import { makeColor, WHITE } from './colors.js'
-import { logoToPixel, pixelToLogo, floodFill, penDash, ellipsePoints } from './surface.js'
+import { logoToPixel, pixelToLogo, floodFill, penDash, ellipsePoints, rectToPixelBox } from './surface.js'
 import { drawShape } from './shapes.js'
 
 export class CanvasSurface {
@@ -104,6 +104,7 @@ export class CanvasSurface {
     m.width = w; m.height = h
     const mc = m.getContext('2d', { willReadFrequently: true })
     mc.setTransform(d, 0, 0, d, -x0, -y0)
+    if (this._clipRect) { const r = this._clipRect; mc.beginPath(); mc.rect(r[0], r[1], r[2], r[3]); mc.clip() }
     this._stroke(mc, { ...style, mode: 'paint', color: makeColor(0, 0, 0) })
     mc.beginPath(); pathFn(mc); mc.stroke()
     const mask = mc.getImageData(0, 0, w, h).data
@@ -284,6 +285,27 @@ export class CanvasSurface {
       const [px, py] = this.toPixel(t.x, t.y)
       drawShape(c, t.currentShape, { x: px, y: py, heading: t.heading, scale: t.shapeScale, frame: t.frame, color: t.shapeColor || undefined })
     }
+  }
+
+  /**
+   * Run fn() with drawing limited to the logo rectangle `bounds` (turtle range, §2.5/§2.7).
+   * Canvas clipping covers stroke/fill/text/drawImage; the XOR pen clips its mask.
+   */
+  withClip(bounds, fn) {
+    if (!bounds) return fn()
+    const [x0, y0, x1, y1] = rectToPixelBox(bounds, this.width, this.height)
+    let rect = [x0, y0, Math.max(0, x1 - x0 + 1), Math.max(0, y1 - y0 + 1)]
+    const prev = this._clipRect
+    if (prev) {
+      const l = Math.max(rect[0], prev[0]), t = Math.max(rect[1], prev[1])
+      const r = Math.min(rect[0] + rect[2], prev[0] + prev[2]), b = Math.min(rect[1] + rect[3], prev[1] + prev[3])
+      rect = [l, t, Math.max(0, r - l), Math.max(0, b - t)]
+    }
+    const c = this.ctx
+    c.save()
+    c.beginPath(); c.rect(rect[0], rect[1], rect[2], rect[3]); c.clip()
+    this._clipRect = rect
+    try { return fn() } finally { this._clipRect = prev; c.restore() }
   }
 
   /** Data URL of the drawing layer (zapiszTło etc.). */

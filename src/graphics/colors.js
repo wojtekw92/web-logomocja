@@ -9,6 +9,7 @@
 //   - an already-resolved {r,g,b} object, or '#rrggbb' (extension)
 // colorToLogo(c) → palette number 0–15 if the colour is exactly in the palette, else [r g b] (§3.1).
 import { LogoError } from '../core/errors.js'
+import { random as sharedRandom } from '../core/values.js'
 import { normName, formatValue, isNumeric, toNumber } from '../core/values.js'
 
 const hex = (h) => {
@@ -142,7 +143,7 @@ export function colorFromName(name) {
 }
 
 const isAny = (v) => typeof v === 'string' && (normName(v) === 'jld' || normName(v) === 'any')
-const rnd256 = () => Math.floor(Math.random() * 256)
+const rnd256 = () => Math.floor(sharedRandom() * 256)
 
 function bad(v, who) {
   return new LogoError(`${who || 'kolor'} nie lubi ${formatValue(v)} jako danej`)

@@ -44,6 +44,31 @@ export class Page extends LogoObject {
       default: return undefined
     }
   }
+  /** Page settings for `nowy`/`ustaw`/`ustalStan`; returns false when `name` is not a setting. */
+  setSetting(name, v) {
+    const w = this.world
+    switch (normName(name)) {
+      case 'koltła': case 'bgcolour': case 'bgcolor': case 'bg':
+        if (w && w.page === this) w.setBackground(v)
+        else this.background = resolveColor(v, 'ustalKolTła')
+        return true
+      case 'rozmiar': case 'size': {
+        if (!Array.isArray(v) || v.length !== 2) throw new LogoError(`rozmiar nie lubi ${v} jako danej`)
+        const [a, b] = v.map(Number)
+        if (!Number.isFinite(a) || !Number.isFinite(b)) throw new LogoError(`rozmiar nie lubi [${v.join(' ')}] jako danej`)
+        if (w && w.page === this) w.resize(a, b)
+        else { this.width = Math.max(1, Math.round(a)); this.height = Math.max(1, Math.round(b)) }
+        return true
+      }
+      case 'stylzakresu': case 'rangestyle': {
+        const st = parseRangeStyle(String(v))
+        if (!st) throw new LogoError(`stylZakresu nie lubi ${v} jako danej`)
+        this.wrapMode = st
+        return true
+      }
+      default: return false
+    }
+  }
 }
 
 export class World {
@@ -104,6 +129,7 @@ export class World {
   // ---------- objects ----------
   _createPage(name, width, height) {
     const p = new Page({ name, width, height, parent: this.pageClass })
+    Object.defineProperty(p, 'world', { value: this, enumerable: false, configurable: true, writable: true })
     this.pages.push(p)
     this.registerObject(p)
     return p
@@ -289,6 +315,15 @@ export class World {
 
   // ---------- events / input ----------
   /** Forward an event to the handler installed by prims (world.eventHandler). */
+  /**
+   * Called by createLogomocja once the interpreter exists. Modules that need the pair (events,
+   * processes: prims/objects.js) register a callback in `World.attachHooks`.
+   */
+  attachInterpreter(interp) {
+    this.interp = interp
+    for (const hook of World.attachHooks) hook(this, interp)
+  }
+
   dispatchEvent(name, data = {}) {
     if (typeof this.eventHandler === 'function') return this.eventHandler(name, data)
     return undefined
@@ -333,3 +368,6 @@ export class World {
     return this.dispatchEvent('gdyKlawisz', { target: null, key })
   }
 }
+
+/** Callbacks `(world, interp) => void` run by World#attachInterpreter. */
+World.attachHooks = []

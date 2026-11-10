@@ -97,6 +97,15 @@ export class Turtle extends LogoObject {
   }
 
   get surface() { return this.world?.surface }
+  /**
+   * Run fn() with drawing clipped to the turtle range (§2.5 shapes, §2.7 `okno`). Without an own
+   * range the page edge clips. Returns fn()'s result.
+   */
+  clipped(fn) {
+    const s = this.surface
+    if (!this.range || !s || typeof s.withClip !== 'function') return fn()
+    return s.withClip(this.bounds(), fn)
+  }
   get background() { return this.page?.background || this.world?.page?.background }
   _changed() { this.world?.requestRender() }
 
@@ -215,7 +224,7 @@ export class Turtle extends LogoObject {
     const world = this.world
     const animate = world && world.speed > 0
     if (!animate) {
-      if (draw) for (const s of plan.segments) this.surface.line(s[0], s[1], s[2], s[3], style)
+      if (draw) this.clipped(() => { for (const s of plan.segments) this.surface.line(s[0], s[1], s[2], s[3], style) })
     } else {
       const step = world.stepPixels()
       let travelled = 0
@@ -226,14 +235,14 @@ export class Turtle extends LogoObject {
         let px = x1, py = y1
         for (let i = 1; i <= n; i++) {
           const nx = x1 + ((x2 - x1) * i) / n, ny = y1 + ((y2 - y1) * i) / n
-          if (chunked) this.surface.line(px, py, nx, ny, { ...style, dashOffset: travelled })
+          if (chunked) this.clipped(() => this.surface.line(px, py, nx, ny, { ...style, dashOffset: travelled }))
           travelled += Math.hypot(nx - px, ny - py)
           px = nx; py = ny
           this.x = px; this.y = py
           world.requestRender()
           if (i < n || len > 0) await world.frame()
         }
-        if (draw && !chunked) this.surface.line(x1, y1, x2, y2, style)
+        if (draw && !chunked) this.clipped(() => this.surface.line(x1, y1, x2, y2, style))
       }
     }
     this.x = snap(plan.x); this.y = snap(plan.y); this.heading = plan.heading
@@ -303,19 +312,19 @@ export class Turtle extends LogoObject {
   circle(diameter) {
     if (this.pen === 'pod') return
     const r = Math.abs(toNumber(diameter, 'okrąg')) / 2
-    this.surface.ellipse(this.x, this.y, r, r, this._shapeStyle())
+    this.clipped(() => this.surface.ellipse(this.x, this.y, r, r, this._shapeStyle()))
     this._changed()
   }
-  /** koło — disc of given DIAMETER filled with fill colour, outline in pen colour. */
+  /** koło — disc of given DIAMETER filled with fill colour, outline in pen colour. Respects pen-up. */
   filledCircle(diameter) {
+    if (this.pen === 'pod') return
     const r = Math.abs(toNumber(diameter, 'koło')) / 2
     const st = this._shapeStyle()
-    const pen = this.pen !== 'pod'
-    this.surface.ellipse(this.x, this.y, r, r, {
+    this.clipped(() => this.surface.ellipse(this.x, this.y, r, r, {
       ...st,
       fillColor: this.pen === 'ścier' ? this.background : this.fillColor,
-      color: pen ? (this.pen === 'ścier' ? this.background : this.penColor) : undefined,
-    })
+      color: this.pen === 'ścier' ? this.background : this.penColor,
+    }))
     this._changed()
   }
   /** kropka — full disc of DIAMETER d in pen colour. */
@@ -323,14 +332,14 @@ export class Turtle extends LogoObject {
     if (this.pen === 'pod') return
     const r = Math.abs(toNumber(diameter, 'kropka')) / 2
     const c = this.pen === 'ścier' ? this.background : this.penColor
-    this.surface.ellipse(this.x, this.y, r, r, { rotation: this.heading, fillColor: c, color: c, width: 1 })
+    this.clipped(() => this.surface.ellipse(this.x, this.y, r, r, { rotation: this.heading, fillColor: c, color: c, width: 1 }))
     this._changed()
   }
   /** pkt — point at the turtle in pen colour/width, even with the pen up. */
   dot() {
     const st = this.lineStyle()
     if (st.mode === 'reverse') st.mode = 'paint'
-    this.surface.line(this.x, this.y, this.x, this.y, st)
+    this.clipped(() => this.surface.line(this.x, this.y, this.x, this.y, st))
     this._changed()
   }
   /**
@@ -338,27 +347,27 @@ export class Turtle extends LogoObject {
    * start/end = arc angles relative to the heading (degrees, clockwise).
    */
   ellipse(a, b, { start = 0, end = 360, filled = false } = {}) {
-    if (!filled && this.pen === 'pod') return
+    if (this.pen === 'pod') return // like okrąg/koło: nothing with the pen up (API_NOTES)
     const st = this._shapeStyle()
-    this.surface.ellipse(this.x, this.y, Math.abs(a), Math.abs(b), {
+    this.clipped(() => this.surface.ellipse(this.x, this.y, Math.abs(a), Math.abs(b), {
       ...st, start, end,
-      fillColor: filled ? this.fillColor : undefined,
-      color: this.pen !== 'pod' ? st.color : undefined,
-    })
+      fillColor: filled ? (this.pen === 'ścier' ? this.background : this.fillColor) : undefined,
+      color: st.color,
+    }))
     this._changed()
   }
   /** Arc of radius r and `angle` degrees, centred on the turtle, starting at its heading, clockwise. */
   arc(angle, radius) {
     if (this.pen === 'pod') return
-    this.surface.arc(this.x, this.y, Math.abs(radius), this.heading, this.heading + angle, this.lineStyle())
+    this.clipped(() => this.surface.arc(this.x, this.y, Math.abs(radius), this.heading, this.heading + angle, this.lineStyle()))
     this._changed()
   }
   /** Filled polygon (logo points), fill colour; outline only if `outline`. */
   polygon(points, { outline = false } = {}) {
-    this.surface.polygon(points, {
+    this.clipped(() => this.surface.polygon(points, {
       fillColor: this.fillColor,
       ...(outline ? { color: this.penColor, width: this.penWidth } : {}),
-    })
+    }))
     this._changed()
   }
 
@@ -378,7 +387,7 @@ export class Turtle extends LogoObject {
   }
   /** napisz — text at the turtle, baseline perpendicular to heading. Drawn regardless of pen-up. */
   label(text) {
-    this.surface.text(this.x, this.y, String(text), this.textStyle())
+    this.clipped(() => this.surface.text(this.x, this.y, String(text), this.textStyle()))
     this._changed()
   }
   /** napisz2 — like label, then the turtle jumps to the end of the text (no drawing). */
@@ -393,9 +402,9 @@ export class Turtle extends LogoObject {
 
   // ---------- stamping ----------
   stamp() {
-    this.surface.stamp(this.currentShape, this.x, this.y, {
+    this.clipped(() => this.surface.stamp(this.currentShape, this.x, this.y, {
       heading: this.heading, scale: this.shapeScale, frame: this.frame, color: this.shapeColor || undefined,
-    })
+    }))
     this._changed()
   }
 

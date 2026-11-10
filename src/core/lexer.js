@@ -6,7 +6,8 @@
 //    Words are delimited by whitespace, `[`, `]`, `(`, `)`. `;` starts a comment, `~` at the end
 //    of a line joins it with the next one, `|...|` makes a word with spaces/special characters,
 //    `\c` escapes one character and `\NN` is the character with code NN (`\13\10` -> `¶`).
-//    List literals keep raw words: `[7-3 a+b]` stays two words. Canonical decimal numbers
+//    List literals keep raw words: `[7-3 a+b]` stays two words, `[(a b)]` too (parens split only at
+//    the top level of a line). Canonical decimal numbers
 //    (`12`, `-3`, `1.5`) become JS numbers; anything else stays a string.
 //
 // 2. `runparse(list)` turns a Logo list into executable TOKENS (cached per array). This splits
@@ -182,8 +183,12 @@ export function readLines(source) {
       continue
     }
     if (c === '(' || c === ')') {
-      // a paren glued to a quote (`"(`) stays part of the quoted word
-      if (word === '"') {
+      // a paren glued to a quote (`"(`) stays part of the quoted word. Inside a list literal parens
+      // are ordinary word characters (`[(a b)]` is the two words `(a` and `b)`); runparse splits
+      // them out when the list is run. A quoted or |bar| word is never split by runparse, so after
+      // one (`"b)`, `|x|)`) the paren is read as a separate word, exactly as at the top level.
+      const gluable = stack.length > 1 && !(word !== null && (word[0] === '"' || wordLiteral))
+      if (word === '"' || gluable) {
         addChar(c)
         i++
         continue
@@ -285,7 +290,8 @@ function scanWord(s, out) {
     const c = s[i]
     if (c === '(') { out.push({ t: T.LPAREN }); i++; atStart = true; continue }
     if (c === ')') { out.push({ t: T.RPAREN }); i++; atStart = false; continue }
-    if (c === '-' && atStart && i + 1 < n && s[i + 1] !== ')') {
+    // `-(` behaves like a standalone `-` followed by `(` (as when the paren is read separately)
+    if (c === '-' && atStart && i + 1 < n && s[i + 1] !== ')' && s[i + 1] !== '(') {
       // minus glued to the following operand
       const nx = s[i + 1]
       if (isDigit(nx) || (nx === '.' && i + 2 < n && isDigit(s[i + 2]))) {

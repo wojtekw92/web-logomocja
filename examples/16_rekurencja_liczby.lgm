@@ -1,0 +1,27 @@
+; Silnia i ciąg Fibonacciego
+; Funkcje rekurencyjne z wynik i jeżeli, tabelka w polu tekstowym i wykres słupkowy.
+
+oto silnia :n
+  wynik jeżeli :n < 2 [1] [:n * silnia :n - 1]
+już
+
+oto fib :n
+  jeśli :n < 3 [wynik 1]
+  wynik (fib :n - 1) + fib :n - 2
+już
+
+oto słupek :wys :kolor
+  ukp :kolor
+  ukm :kolor
+  wielokąt [powtórz 2 [np :wys pw 90 np 30 pw 90]]
+  pod pw 90 np 40 lw 90 opu
+już
+
+oto starter
+  czyść
+  schowajMnie
+  dla "n [1 10] [(pisz słowo :n "! "= silnia :n)]
+  pod ustalPoz [-370 -230] skieruj 0 opu
+  dla "i [1 15] [słupek (fib :i) / 2 1 + reszta :i 14]
+  pisz [Słupki to kolejne liczby Fibonacciego, wysokość słupka to połowa liczby.]
+już

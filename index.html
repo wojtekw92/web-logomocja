@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logomocja</title>
+  <meta name="description" content="Logomocja (polska edycja Imagine Logo) w przeglądarce">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='17' rx='9' ry='11' fill='%2322a34a'/%3E%3Ccircle cx='16' cy='4.5' r='3.5' fill='%2322a34a'/%3E%3Cpath d='M16 9 L22 15 L19 23 L13 23 L10 15Z' fill='%23177a36'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-screen="split">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-run" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M4 20h16M7 16l9.5-9.5 3 3L10 19H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cs" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 15l3-4 2 2.5 3-4" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".45"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5M5 4v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zM8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-button" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-slider" viewBox="0 0 24 24"><path d="M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="11" y="7" width="4" height="10" rx="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-textbox" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 10h10M7 14h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-procs" viewBox="0 0 24 24"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 16.5v.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-turtle" viewBox="0 0 32 32"><ellipse cx="16" cy="17" rx="8.5" ry="10.5" fill="#22a34a"/><circle cx="16" cy="4.8" r="3.4" fill="#22a34a"/><circle cx="8" cy="10" r="2.4" fill="#22a34a"/><circle cx="24" cy="10" r="2.4" fill="#22a34a"/><circle cx="8" cy="24" r="2.4" fill="#22a34a"/><circle cx="24" cy="24" r="2.4" fill="#22a34a"/><path d="M16 9.5l5.5 5-2.3 7.5h-6.4l-2.3-7.5z" fill="#13692e"/></symbol>
+  </svg>
+
+  <div class="app" id="app">
+    <header class="titlebar">
+      <div class="brand">
+        <svg class="brand-logo" aria-hidden="true"><use href="#i-turtle"/></svg>
+        <span class="brand-name">Logomocja</span>
+        <span class="brand-sub">Imagine Logo w przeglądarce</span>
+      </div>
+      <nav class="menubar" id="menubar" aria-label="Menu główne">
+        <div class="menu">
+          <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false">Plik</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem" data-cmd="new">Nowy projekt</button>
+            <button type="button" role="menuitem" data-cmd="open">Otwórz projekt (.lgm, .imp)…<kbd>Ctrl+O</kbd></button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="save-local">Zapisz w przeglądarce<kbd>Ctrl+S</kbd></button>
+            <button type="button" role="menuitem" data-cmd="load-local">Wczytaj z przeglądarki</button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="download">Zapisz jako plik .lgm…</button>
+            <label class="menu-check"><input type="checkbox" id="optImage"> dołącz rysunek strony</label>
+            <button type="button" role="menuitem" data-cmd="png">Zapisz rysunek strony (PNG)</button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false">Strona</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem" data-cmd="cs">Czyść stronę (czyść)</button>
+            <button type="button" role="menuitem" data-cmd="clean">Zmaż rysunek (zmaż)</button>
+            <button type="button" role="menuitem" data-cmd="reset">Odnowa</button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="new-button">Nowy przycisk</button>
+            <button type="button" role="menuitem" data-cmd="new-slider">Nowy suwak</button>
+            <button type="button" role="menuitem" data-cmd="new-textbox">Nowe pole tekstowe</button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="fit">Dopasuj / rozmiar 100%</button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false">Widok</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem" data-cmd="screen-split">Ekran dzielony</button>
+            <button type="button" role="menuitem" data-cmd="screen-graphics">Tylko ekran graficzny</button>
+            <button type="button" role="menuitem" data-cmd="screen-text">Tylko pole tekstowe</button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="panel-procs">Procedury<kbd>F2</kbd></button>
+            <button type="button" role="menuitem" data-cmd="panel-help">Pomoc<kbd>F1</kbd></button>
+            <hr>
+            <button type="button" role="menuitem" data-cmd="theme">Motyw: jasny / ciemny / systemowy</button>
+            <button type="button" role="menuitem" data-cmd="fullscreen">Pełny ekran<kbd>F11</kbd></button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false">Pomoc</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem" data-cmd="panel-help">Słownik procedur pierwotnych</button>
+            <button type="button" role="menuitem" data-cmd="shortcuts">Skróty klawiszowe</button>
+            <button type="button" role="menuitem" data-cmd="about">O programie</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div class="toolbar" role="toolbar" aria-label="Pasek narzędzi">
+      <div class="tool-group">
+        <button type="button" class="tool run" id="btnRun" title="Uruchom polecenie z linii poleceń (Enter)"><svg><use href="#i-run"/></svg><span>Uruchom</span></button>
+        <button type="button" class="tool stop" id="btnStop" title="Zatrzymaj wszystko (Esc)" disabled><svg><use href="#i-stop"/></svg><span>Zatrzymaj</span></button>
+      </div>
+      <div class="tool-group">
+        <button type="button" class="tool" id="btnClearText" title="Wyczyść pole tekstowe (czyśćTekst)"><svg><use href="#i-clear"/></svg><span>Wyczyść</span></button>
+        <button type="button" class="tool" data-cmd="cs" title="Czyść stronę i ustaw żółwie w stanie początkowym (czyść)"><svg><use href="#i-cs"/></svg><span>Czyść</span></button>
+        <button type="button" class="tool icon-only" data-cmd="reset" title="Odnowa: jeden żółw, białe tło"><svg><use href="#i-reset"/></svg></button>
+      </div>
+      <div class="tool-group hide-narrow">
+        <button type="button" class="tool icon-only" data-cmd="new-button" title="Nowy przycisk"><svg><use href="#i-button"/></svg></button>
+        <button type="button" class="tool icon-only" data-cmd="new-slider" title="Nowy suwak"><svg><use href="#i-slider"/></svg></button>
+        <button type="button" class="tool icon-only" data-cmd="new-textbox" title="Nowe pole tekstowe"><svg><use href="#i-textbox"/></svg></button>
+      </div>
+      <div class="tool-group">
+        <button type="button" class="tool icon-only" data-cmd="open" title="Otwórz projekt (.lgm, .imp)"><svg><use href="#i-open"/></svg></button>
+        <button type="button" class="tool icon-only" data-cmd="download" title="Zapisz projekt jako plik .lgm"><svg><use href="#i-save"/></svg></button>
+        <select id="examples" class="examples" title="Przykładowe programy" aria-label="Przykłady">
+          <option value="">Przykłady…</option>
+        </select>
+      </div>
+      <div class="tool-group speed" title="Prędkość żółwia (maks. = natychmiast, jak w oryginale)">
+        <label for="speed">Prędkość</label>
+        <input type="range" id="speed" min="1" max="11" step="1" value="11">
+        <output id="speedOut" for="speed">maks.</output>
+      </div>
+      <div class="tool-group right">
+        <button type="button" class="tool toggle" id="btnProcs" data-cmd="panel-procs" title="Procedury (F2)" aria-pressed="false"><svg><use href="#i-procs"/></svg><span>Procedury</span></button>
+        <button type="button" class="tool toggle" id="btnHelp" data-cmd="panel-help" title="Pomoc (F1)" aria-pressed="false"><svg><use href="#i-help"/></svg><span>Pomoc</span></button>
+        <button type="button" class="tool icon-only" data-cmd="theme" id="btnTheme" title="Motyw"><svg><use href="#i-theme"/></svg></button>
+      </div>
+    </div>
+
+    <main class="workspace" id="workspace">
+      <section class="main-col" id="mainCol">
+        <div class="page-area" id="pageArea">
+          <div class="button-bar" id="buttonBar" role="toolbar" aria-label="Okno przycisków" hidden></div>
+          <div class="page-scaler" id="pageScaler">
+            <div class="page-host" id="pageHost" tabindex="0" aria-label="Strona s1 — kliknij, aby klawisze trafiały do programu">
+              <div class="widget-layer" id="widgetLayer"></div>
+            </div>
+          </div>
+          <button type="button" class="fit-btn" data-cmd="fit" title="Dopasuj do okna / 100%"><svg><use href="#i-fit"/></svg></button>
+        </div>
+
+        <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" aria-label="Zmień wysokość pola tekstowego" tabindex="0"></div>
+
+        <section class="memo-pane" id="memoPane" aria-label="Pole tekstowe">
+          <div class="pane-title"><span>Pole tekstowe</span><span class="pane-actions"><button type="button" class="link" id="btnCopyMemo" title="Kopiuj zawartość">kopiuj</button></span></div>
+          <div class="memo" id="memo" role="log" aria-live="polite" tabindex="0"></div>
+        </section>
+
+        <div class="cmdline" id="cmdline">
+          <span class="cmd-prompt" id="cmdPrompt" aria-hidden="true">?</span>
+          <textarea id="cmd" rows="1" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Linia poleceń" placeholder="Linia poleceń — np. powtórz 4 [np 100 pw 90]"></textarea>
+          <div class="complete" id="complete" hidden></div>
+        </div>
+      </section>
+
+      <aside class="side" id="side" hidden>
+        <div class="side-tabs" role="tablist">
+          <button type="button" role="tab" id="tabProcs" aria-selected="true" data-tab="procs">Procedury</button>
+          <button type="button" role="tab" id="tabHelp" aria-selected="false" data-tab="help">Pomoc</button>
+          <button type="button" class="side-close" id="sideClose" title="Zamknij panel" aria-label="Zamknij panel">×</button>
+        </div>
+        <section class="side-panel editor" id="panelProcs" role="tabpanel" aria-labelledby="tabProcs">
+          <div class="editor-bar">
+            <button type="button" class="primary" id="btnApply" title="Zdefiniuj wszystkie procedury (Ctrl+Enter)">Zastosuj</button>
+            <button type="button" id="btnNewProc" title="Dopisz szkielet nowej procedury">Nowa procedura</button>
+            <button type="button" id="btnRevert" title="Odrzuć zmiany w edytorze">Cofnij zmiany</button>
+            <span class="editor-status" id="editorStatus"></span>
+          </div>
+          <div class="code-wrap">
+            <pre class="code-hl" id="editorHl" aria-hidden="true"></pre>
+            <textarea class="code-ta" id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Edytor procedur" placeholder="oto kwadrat :bok&#10;  powtórz 4 [np :bok pw 90]&#10;już"></textarea>
+          </div>
+        </section>
+        <section class="side-panel help" id="panelHelp" role="tabpanel" aria-labelledby="tabHelp" hidden>
+          <div class="help-search">
+            <input type="search" id="helpSearch" placeholder="Szukaj: nazwa, alias angielski lub opis…" aria-label="Szukaj w słowniku">
+            <span class="help-count" id="helpCount"></span>
+          </div>
+          <ul class="help-list" id="helpList"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="statusbar" id="statusbar">
+      <span class="st-state" id="stState"><i></i><b>Gotowe</b></span>
+      <span id="stCoords" class="st-coords">x — y —</span>
+      <span id="stTurtles"></span>
+      <span id="stProject" class="st-project"></span>
+    </footer>
+  </div>
+
+  <noscript><p class="noscript">Logomocja potrzebuje JavaScriptu. Otwórz stronę przez serwer statyczny, np. <code>python3 -m http.server</code>.</p></noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

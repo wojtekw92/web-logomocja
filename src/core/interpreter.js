@@ -63,10 +63,19 @@
 // Primitive spec extras understood by the evaluator:
 //   extraListArg: true   after the default inputs, consume ONE more input if the next token is a
 //                        literal list `[...]` (PRIMITYWY.md §17.8; applied to `jeśli` automatically).
+//   extraQuotedArg: true after the default inputs, consume ONE more input if the next token is a
+//                        quoted word `"x` (`redaguj "kw`, `zapiszProjekt "gra` without parentheses).
+//   listStopsArgs: true  when the first input evaluates to a list, no further inputs are taken
+//                        (`niech [a 1 b 2]`).
+//   discardable: true    P/F primitive (`nowy`, `klonuj`): when its value ends up unused as a
+//                        command it is dropped instead of `Nie wiem co zrobić z …`.
+//   tailList: true       the primitive runs a runlist with interp.runList as its LAST action and
+//                        returns its value (`jeśli`, `jeżeli`, `uruchom`); in tail position of a
+//                        procedure the last call in that list is tail-call optimised.
 // ============================================================================================
 
 import { LogoError, StopSignal, OutputSignal, AbortSignal, ThrowSignal, isSignal, formatError } from './errors.js'
-import { normName, formatValue, toNumber, isNumeric, equalValues, fromBool, LogoObject } from './values.js'
+import { normName, formatValue, toNumber, isNumeric, equalValues, fromBool, LogoObject, randomInt } from './values.js'
 import { runparse, readList, T } from './lexer.js'
 import { parse, defFromList, defToList, defToSource, parseParamSpec } from './parser.js'
 
@@ -116,6 +125,25 @@ class TailCall {
   }
 }
 
+/** Parenthesis nesting deeper than this is reported before running (the JS stack would overflow). */
+const MAX_PAREN_DEPTH = 800
+const parensChecked = new WeakSet()
+
+/**
+ * Static check of a token array, before any instruction of it runs: an unmatched `)` is reported
+ * up front (like an unmatched `]`), and absurdly deep `(((…)))` nesting too.
+ */
+function checkParens(toks, interp) {
+  if (parensChecked.has(toks)) return
+  let depth = 0
+  for (const t of toks) {
+    if (t.t === T.LPAREN) {
+      if (++depth > MAX_PAREN_DEPTH) throw interp.recursionError()
+    } else if (t.t === T.RPAREN && --depth < 0) throw new LogoError('Nieoczekiwany )')
+  }
+  parensChecked.add(toks)
+}
+
 class Stream {
   constructor(toks) {
     this.toks = toks
@@ -125,6 +153,10 @@ class Stream {
     this.producer = null
   }
 }
+
+/** Key for per-process bookkeeping (discardable values). */
+const procKey = (ctx) => ctx?.process ?? MAIN_PROC
+const MAIN_PROC = {}
 
 const CTX_ACCESSORS = {
   self: {
@@ -237,7 +269,10 @@ export class Interpreter {
         fn(key, ctx, self) {
           if (!self || typeof self.findVar !== 'function') return null
           const r = self.findVar(key)
-          return r && r.found && r.value !== undefined ? { kind: 'value', value: r.value } : null
+          if (r && r.found && r.value !== undefined) return { kind: 'value', value: r.value }
+          // §17.5 step 5: a setting of `self` (e.g. a slider's `pionowy`)
+          const v = typeof self.getSetting === 'function' ? self.getSetting(key) : undefined
+          return v === undefined ? null : { kind: 'value', value: v }
         },
       },
       {
@@ -413,8 +448,10 @@ export class Interpreter {
     return this._activeRuns > 0 || this.processes.size > 0
   }
 
-  abort() {
+  /** Stop. `{silent: true}` (poziomGłówny, zakończ): the interrupted run prints no `Zatrzymano!`. */
+  abort({ silent = false } = {}) {
     this.abortGen++
+    this._silentAbortGen = silent ? this.abortGen : undefined
     const ac = this._ac
     this._ac = new AbortController()
     ac.abort()
@@ -518,6 +555,8 @@ export class Interpreter {
   }
 
   recursionError(name) {
+    // outside any procedure (deep nesting at top level) there is no name to report
+    if (name === undefined || name === null || name === '?') return new LogoError('Za mało pamięci (za głęboka rekurencja)')
     return new LogoError(`Za mało pamięci (za głęboka rekurencja) w ${name}`, { procedure: name })
   }
 
@@ -588,19 +627,21 @@ export class Interpreter {
         line = d.line
         definitions.push(this.defineProcedure(d).name)
       }
+      this._discard?.delete(procKey(rctx))
       for (const L of parsed.bodyLines) {
         line = L.line
         rctx.line = L.line
         const s = new Stream(runparse(L.items))
         const v = await this._exec(s, rctx)
-        if (v !== undefined) throw this.unusedValue(v)
+        if (v !== undefined && !this.dropValue(v, rctx)) throw this.unusedValue(v)
       }
       return { ok: true, definitions }
     } catch (e) {
       if (e instanceof StopSignal) return { ok: true, definitions }
       const err = this.toTopLevelError(e)
       if (err instanceof LogoError && err.line === undefined && !err.procedure) err.line = line
-      this.reportError(err)
+      const silent = err instanceof AbortSignal && this._silentAbortGen !== undefined && this._silentAbortGen === this.abortGen
+      if (!silent) this.reportError(err)
       return { ok: false, error: err, aborted: err instanceof AbortSignal, definitions }
     } finally {
       this._activeRuns--
@@ -617,8 +658,12 @@ export class Interpreter {
   /** Run a runlist; returns the value of the last instruction (or undefined). */
   async runList(list, ctx) {
     ctx = ctx ?? this.rootCtx()
+    // tail position of a procedure (set by invokeFromStream for `tailList` primitives)
+    const tail = this._tailCtx === ctx
+    if (tail) this._tailCtx = null
     await this.tick(ctx)
     const s = new Stream(runparse(this.asList(list)))
+    s.tail = tail
     const v = await this._exec(s, ctx)
     return v
   }
@@ -626,25 +671,46 @@ export class Interpreter {
   /** Run a runlist of commands: any leftover value is an error. */
   async execList(list, ctx) {
     const v = await this.runList(list, ctx)
-    if (v !== undefined) throw this.unusedValue(v)
+    if (v !== undefined && !this.dropValue(v, ctx)) throw this.unusedValue(v)
+  }
+
+  /**
+   * True (and forgets it) when `v` is exactly the value the last `discardable` primitive returned
+   * in this process, i.e. `nowy "Żółw []` used as a command, also through `jeśli`/`uruchom`.
+   */
+  dropValue(v, ctx) {
+    const m = this._discard
+    if (!m || v === undefined) return false
+    const k = procKey(ctx)
+    if (!m.has(k) || m.get(k) !== v) return false
+    m.delete(k)
+    return true
   }
 
   /** Evaluate a list that must produce a value. */
   async evalList(list, ctx, who) {
     ctx = ctx ?? this.rootCtx()
-    await this.tick(ctx)
-    const l = this.asList(list)
-    const s = new Stream(runparse(l))
-    const v = await this._exec(s, ctx)
-    if (v === undefined) throw this.noOutput(s.producer ?? formatValue(l), who)
-    return v
+    // a condition (`jeśli [..] [ruch]`) is never in tail position; the branch list still is
+    const tail = this._tailCtx === ctx
+    if (tail) this._tailCtx = null
+    try {
+      await this.tick(ctx)
+      const l = this.asList(list)
+      const s = new Stream(runparse(l))
+      const v = await this._exec(s, ctx)
+      if (v === undefined) throw this.noOutput(s.producer ?? formatValue(l), who)
+      return v
+    } finally {
+      if (tail) this._tailCtx = ctx
+    }
   }
 
   async _exec(s, ctx) {
     const toks = s.toks
+    if (s.i === 0) checkParens(toks, this)
     let last
     while (s.i < toks.length) {
-      if (last !== undefined) throw this.unusedValue(last)
+      if (last !== undefined && !this.dropValue(last, ctx)) throw this.unusedValue(last)
       this.checkAbort(ctx)
       s.instrStart = s.i
       s.producer = null
@@ -699,6 +765,8 @@ export class Interpreter {
       case T.LIST:
         return tok.v
       case T.VAR:
+        // a bare `:` names nothing
+        if (tok.v === '') throw new LogoError('Nie wiem jak wykonać :', { hint: HINT_UNKNOWN })
         return this.getVar(tok.v, ctx)
       case T.LPAREN:
         return this.evalParen(s, ctx, who)
@@ -749,7 +817,14 @@ export class Interpreter {
     }
     const member = parts[parts.length - 1]
     const callCtx = this.objectCtx(ctx, obj)
-    return { target: this.resolve(member, callCtx, obj), callCtx, name: member, object: obj }
+    let target = this.resolve(member, callCtx, obj)
+    // An explicitly addressed UI object (`suw1'min`, `suw1'wartość`): its settings (§14) win over
+    // primitives of the same name (math `min`/`maks`, `wartość`). Own methods still come first.
+    if (obj.addressedSettingsFirst && (!target || target.kind === 'prim') && typeof obj.getSetting === 'function') {
+      const v = obj.getSetting(member)
+      if (v !== undefined) target = { kind: 'value', value: v }
+    }
+    return { target, callCtx, name: member, object: obj }
   }
 
   arityOf(target) {
@@ -780,17 +855,35 @@ export class Interpreter {
     if (paren) {
       while (s.i < s.toks.length && s.toks[s.i].t !== T.RPAREN) {
         if (args.length >= ar.max) throw new LogoError(`Za dużo danych dla ${name}`)
-        args.push(await this.evalArg(s, ctx, name))
+        args.push(await this.evalArg(s, callCtx, name))
       }
       if (args.length < ar.min) throw new LogoError(`Za mało danych dla ${name}`)
     } else {
-      for (let k = 0; k < ar.def; k++) args.push(await this.evalArg(s, ctx, name))
+      const sp = target.kind === 'prim' ? target.spec : null
+      // §1.3: `ż2'X args` ≡ `proszę "ż2 [X args]`, so the inputs are evaluated by the addressee too
+      for (let k = 0; k < ar.def; k++) {
+        args.push(await this.evalArg(s, callCtx, name))
+        if (k === 0 && sp?.listStopsArgs && Array.isArray(args[0])) break
+      }
       if (
-        target.kind === 'prim' &&
+        sp &&
         s.toks[s.i]?.t === T.LIST &&
-        ((target.spec.extraListArg === true && args.length < ar.max) || nkey(target.spec.name) === 'jeśli')
+        ((sp.extraListArg === true && args.length < ar.max) || nkey(sp.name) === 'jeśli')
       ) {
         args.push(s.toks[s.i++].v)
+      } else if (sp?.extraQuotedArg && args.length < ar.max && s.toks[s.i]?.t === T.QUOTE) {
+        args.push(s.toks[s.i++].v)
+      }
+      if (sp?.tailList && s.tail && headIndex === s.instrStart && s.i === s.toks.length && callCtx === ctx) {
+        // `jeśli :n > 0 [ruch :n - 1]` as the last instruction: let runList see the tail position
+        this._tailCtx = ctx
+        try {
+          const v = await this.callPrim(sp, args, ctx, name)
+          s.producer = name
+          return v
+        } finally {
+          if (this._tailCtx === ctx) this._tailCtx = null
+        }
       }
       // proper tail call: `oto ruch ... ruch już`
       if (
@@ -814,11 +907,14 @@ export class Interpreter {
   async callPrim(spec, args, ctx, name = spec.name) {
     this.checkAbort(ctx)
     if (++this.steps % this.yieldEvery === 0) await this.maybeYield(ctx)
+    let v
     try {
-      return await spec.fn(ctx, ...args)
+      v = await spec.fn(ctx, ...args)
     } catch (e) {
       throw this.decoratePrimError(e, name)
     }
+    if (spec.discardable && v !== undefined) (this._discard ??= new WeakMap()).set(procKey(ctx), v)
+    return v
   }
 
   // ------------------------------------------------------------------ user procedures
@@ -916,7 +1012,7 @@ export class Interpreter {
       s.tail = li === lines.length - 1
       const v = await this._exec(s, pctx)
       if (v instanceof TailCall) return v
-      if (v !== undefined) throw this.unusedValue(v)
+      if (v !== undefined && !this.dropValue(v, pctx)) throw this.unusedValue(v)
     }
     return undefined
   }
@@ -1078,7 +1174,7 @@ export class Interpreter {
     if (typeof v === 'number') return v
     if (typeof v === 'string') {
       const k = normName(v)
-      if (k === 'jld' || k === 'any') return Math.floor(Math.random() * 100)
+      if (k === 'jld' || k === 'any') return randomInt(100)
     }
     return toNumber(v, op)
   }
@@ -1313,3 +1409,7 @@ export class Interpreter {
     while (this.processes.size) await Promise.all([...this.processes].map((p) => p.promise))
   }
 }
+
+// `discardable` primitives are handled natively (prims/objects.js keeps a fallback wrapper that
+// switches itself off when this flag is set).
+Interpreter.prototype.supportsDiscardable = true

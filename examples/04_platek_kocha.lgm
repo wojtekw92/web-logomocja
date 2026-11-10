@@ -1,0 +1,30 @@
+; Płatek Kocha
+; Krzywa Kocha: odcinek dzielimy na trzy części, a środkową zastępujemy "daszkiem".
+; Na końcu płatek jest zamalowywany od środka.
+
+oto koch :dł :st
+  jeśli :st = 0 [np :dł stop]
+  koch :dł / 3 :st - 1
+  lw 60
+  koch :dł / 3 :st - 1
+  pw 120
+  koch :dł / 3 :st - 1
+  lw 60
+  koch :dł / 3 :st - 1
+już
+
+oto płatek :dł :st
+  powtórz 3 [koch :dł :st pw 120]
+już
+
+oto starter
+  czyść
+  pod ustalPoz [-170 100] skieruj 90 opu
+  ukp "niebieski
+  płatek 340 4
+  ; środek trójkąta leży w punkcie [0 2]
+  pod ustalPoz [0 0] opu
+  ukm "błękitny
+  zamaluj
+  schowajMnie
+już

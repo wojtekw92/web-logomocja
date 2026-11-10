@@ -1,0 +1,25 @@
+; Przyciski
+; Każdy przycisk ma zdarzenie gdyWciśnięty, które rysuje figurę w losowym miejscu.
+
+oto w.losowe.miejsce
+  pod ustalPoz lista -250 + losowa 500 -170 + losowa 300 skieruj losowa 360 opu
+już
+
+oto kwadrat :bok
+  powtórz 4 [np :bok pw 90]
+już
+
+oto trójkąt :bok
+  powtórz 3 [np :bok pw 120]
+już
+
+oto starter
+  czyść
+  ugp 3
+  nowy "Przycisk [napis Kwadrat poz [-390 240] gdyWciśnięty [w.losowe.miejsce kwadrat 60]]
+  nowy "Przycisk [napis Trójkąt poz [-300 240] gdyWciśnięty [w.losowe.miejsce trójkąt 70]]
+  nowy "Przycisk [napis Koło poz [-210 240] gdyWciśnięty [w.losowe.miejsce koło 60]]
+  nowy "Przycisk [napis Kolor poz [-120 240] gdyWciśnięty [ukp jld ukm jld]]
+  nowy "Przycisk [napis Czyść poz [-30 240] gdyWciśnięty [czyść]]
+  pisz [Naciskaj przyciski nad stroną.]
+już

@@ -6,6 +6,18 @@ export const FALSE = 'fałsz'
 
 export const normName = (s) => String(s).toLocaleLowerCase('pl')
 
+// Shared random source. prims/math.js installs its seedable PRNG here (`losujOdNowa`), so every
+// `jld`/random decision in core, graphics and prims is reproducible after seeding.
+let rng = Math.random
+/** Random float in [0, 1) from the shared (seedable) generator. */
+export const random = () => rng()
+/** Random integer in [0, n). */
+export const randomInt = (n) => Math.floor(rng() * n)
+/** Install a generator `() => [0,1)`; without a function, restores Math.random. */
+export function setRandom(fn) {
+  rng = typeof fn === 'function' ? fn : Math.random
+}
+
 export class LogoObject {
   constructor({ name = '', className = '', parent = null } = {}) {
     this.name = name
@@ -62,12 +74,12 @@ export function toBool(v, who) {
     const n = normName(v)
     if (n === TRUE || n === 'true') return true
     if (n === FALSE || n === 'false') return false
-    if (n === 'jld' || n === 'any') return Math.random() < 0.5
+    if (n === 'jld' || n === 'any') return rng() < 0.5
   }
   // Imagine numeric logic: <=0 false, >=1 true, 0<p<1 true with probability p
   if (isNumeric(v)) {
     const p = toNumber(v)
-    return p <= 0 ? false : p >= 1 ? true : Math.random() < p
+    return p <= 0 ? false : p >= 1 ? true : rng() < p
   }
   throw badInput(who, v, 'nie jest wartością logiczną')
 }

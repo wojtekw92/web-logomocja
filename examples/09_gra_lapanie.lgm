@@ -1,0 +1,35 @@
+; Gra: złap gwiazdkę!
+; Kliknij gwiazdkę myszą (zdarzenie gdyKlik) albo dojedź do niej żółwiem ż1,
+; sterując strzałkami lub klawiszami W A S D (zdarzenie gdyKlawisz).
+; Gwiazdka co dwie sekundy przeskakuje w inne miejsce (proces co).
+
+oto skocz
+  ustalPoz lista -300 + losowa 600 -200 + losowa 400
+już
+
+oto trafiony
+  zwiększ "punkty
+  (pisz "Punkty: :punkty)
+  skocz
+już
+
+oto steruj :k
+  wybierz :k [
+    ArrowLeft a [lw 15]
+    ArrowRight d [pw 15]
+    ArrowUp w [np 12]
+    ArrowDown s [ws 12]
+  ]
+  jeśli (odległość "cel) < 25 [proszę "cel [trafiony]]
+już
+
+oto starter
+  odnowa
+  przypisz "punkty 0
+  nowy "Żółw [nazwa cel postać gwiazda pisak pod gdyKlik [trafiony]]
+  proszę "cel [ustalKolPostaci "pomarańczowy skocz]
+  ż1'podnieś
+  ż1'ustalZdarzenie "gdyKlawisz [steruj ostatniKlawisz]
+  co 2000 [proszę "cel [skocz]]
+  pisz [Kliknij gwiazdkę albo dojedź do niej strzałkami!]
+już

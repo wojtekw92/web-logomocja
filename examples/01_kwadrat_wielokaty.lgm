@@ -1,0 +1,29 @@
+; Kwadrat i wielokąty foremne
+; Pierwsze kroki z żółwiem: procedura z parametrem, pętla powtórz i pętla dla.
+; Po wczytaniu projektu sama uruchamia się procedura starter.
+
+oto kwadrat :bok
+  powtórz 4 [np :bok pw 90]
+już
+
+; wielokąt foremny o :n bokach - żółw obraca się w sumie o 360 stopni
+oto foremny :n :bok
+  powtórz :n [np :bok pw 360 / :n]
+już
+
+oto starter
+  czyść
+  ugp 2
+  ; wielokąty od trójkąta do dziesięciokąta, wszystkie zaczynają się w tym samym punkcie
+  pod ustalPoz [-60 -60] opu
+  dla "n [3 10] [ukp :n foremny :n 70]
+  ; zamalowany kwadrat w lewym górnym rogu
+  pod ustalPoz [-330 120] skieruj 0 opu
+  ukp "czarny
+  kwadrat 100
+  pod pw 45 np 20 opu
+  ukm "pomarańczowy
+  zamaluj
+  pod ustalPoz [-330 120] skieruj 0 opu
+  pisz [Kwadrat, wielokąty foremne i zamalowywanie gotowe.]
+już

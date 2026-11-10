@@ -1,0 +1,33 @@
+; Suwak sterujący kątem
+; Przesuwaj suwak: żółw rysuje gwiazdę o kącie obrotu równym wartości suwaka.
+; Nazwa suwaka użyta jako słowo (suw1) daje jego wartość.
+
+; największy wspólny dzielnik (algorytm Euklidesa)
+oto nwd :a :b
+  jeśli :b = 0 [wynik :a]
+  wynik nwd :b reszta :a :b
+już
+
+oto figura
+  niech "kąt zaokrąglij suw1
+  ; bok dobrany tak, by gwiazda zawsze mieściła się w okręgu o promieniu 150
+  niech "bok 300 * sin :kąt / 2
+  czyść
+  schowajMnie
+  ; z środka strony do pierwszego wierzchołka
+  pod wróć skieruj 180 - :kąt / 2 ws 150 skieruj 90 opu
+  ukp "fioletowy
+  ; po tylu krokach żółw wraca do punktu startu
+  powtórz 360 / nwd :kąt 360 [np :bok pw :kąt]
+  pod ustalPoz [-380 200] skieruj 0 opu
+  ukp "czarny
+  napisz zdanie [Kąt obrotu:] :kąt
+  pod wróć opu
+  pokażMnie
+już
+
+oto starter
+  czyść
+  nowy "Suwak [min 1 maks 179 wartość 144 poz [-380 240] rozmiar [200 24] gdyZmieniasz [figura]]
+  figura
+już

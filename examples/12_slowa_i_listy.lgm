@@ -1,0 +1,53 @@
+; Słowa i listy
+; Rekurencyjne odwracanie słowa, palindromy, sortowanie przez wybieranie,
+; liczenie samogłosek i szyfr Cezara. Wyniki pojawiają się w polu tekstowym.
+
+oto odwróć :s
+  jeśli puste? :s [wynik "]
+  wynik słowo odwróć bezPierw :s pierw :s
+już
+
+oto palindrom? :s
+  wynik (odwróć :s) = :s
+już
+
+oto mniejszy :a :b
+  wynik jeżeli :a < :b [:a] [:b]
+już
+
+oto najmniejszy :l
+  jeśli 1 = długość :l [wynik pierw :l]
+  wynik mniejszy pierw :l najmniejszy bezPierw :l
+już
+
+; sortowanie przez wybieranie: najmniejszy element na początek, reszta rekurencyjnie
+oto sortowanie :l
+  jeśli puste? :l [wynik []]
+  niech "m najmniejszy :l
+  wynik nap :m sortowanie bezElNum numel :m :l :l
+już
+
+oto samogłoski :s
+  niech "ile 0
+  dlaKażdego "z :s [jeśli element? :z "aąeęioóuy [zwiększ "ile]]
+  wynik :ile
+już
+
+; szyfr Cezara dla małych liter a-z
+oto szyfr :s :k
+  wynik mapuj [znak 97 + reszta (ascii :%) - 97 + :k 26] :s
+już
+
+oto starter
+  (pisz "Logomocja "wspak: odwróć "Logomocja)
+  (pisz "kajak "to "palindrom? palindrom? "kajak)
+  (pisz "żółw "to "palindrom? palindrom? "żółw)
+  pokaż sortowanie [5 3 9 1 7 3]
+  pokaż sortuj [gruszka jabłko śliwka banan ćma]
+  (pisz [Samogłoski w słowie Konstantynopolitańczykowianeczka:] samogłoski "Konstantynopolitańczykowianeczka)
+  (pisz "szyfr: szyfr "logomocja 3 "-> szyfr szyfr "logomocja 3 23)
+  pokaż mapuj [:% * :%] [1 2 3 4 5]
+  pokaż filtruj [:% > 5] [3 8 1 9 6]
+  pokaż zdanie [ala ma] [kota i psa]
+  pokaż lista [ala ma] "kota
+już
