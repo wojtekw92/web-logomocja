@@ -56,7 +56,7 @@ Never edit a file you do not own except `src/prims/index.js` (add one import+cal
 Exports: `isNumber, isWord, isList, isObject, toNumber(v) (throws LogoError if not numeric),
 toBool(v), fromBool(b), TRUE='prawda', FALSE='fałsz', formatValue(v, {top:true})`
 (`formatValue` prints like Logo: lists with brackets except at top level of `pisz`,
-numbers without trailing `.0`, floats rounded to ≤ 10 significant digits),
+numbers without trailing `.0`, non-integers printed with 6 significant digits (PRIMITYWY.md §17.6)),
 `equalValues(a,b)` (case-insensitive for words, numeric comparison when both numeric),
 `normName(s)` = `s.toLocaleLowerCase('pl')` — **all name lookups (procedures, variables,
 primitives, objects, properties) are case-insensitive via normName**.
@@ -108,9 +108,20 @@ export class Interpreter {
   turtle), `turtle` is the turtle commands apply to (=`self` when self is a turtle).
 - Infix precedence per standard Logo. Primitive with arity N consumes N inputs; `(prim a b c)`
   in parentheses allows variadic calls where `maxArity` permits.
-- Name resolution order for a word `foo`: user procedure → primitive → **object-scoped**
-  procedures/properties of `ctx.self` and its class chain (Imagine: methods of the object) →
-  error `Nie wiem jak wykonać foo`. Also handle Imagine dot syntax `obiekt'polecenie` / `obiekt'zmienna`
+- Name resolution order for a word `foo` (revised per research, see PRIMITYWY.md §17.5):
+  1. **own** procedure of `ctx.self`;
+  2. procedures of `ctx.self`'s class/prototype chain and its behaviours (Imagine methods;
+     `zwykle`/`usual` calls the next one up the chain);
+  3. user global procedure (main window);
+  4. primitive;
+  5. setting/variable of `ctx.self` named `foo` (e.g. `kierunek`, `zawartość`), or a word naming an
+     object that has a value (slider `suw1` → its value);
+  6. error `Nie wiem jak wykonać foo`.
+
+  Objects can override globals and primitives because Imagine objects own procedures and `usual`
+  exists. No primary source states this order, so keep the resolver configurable (one ordered
+  array of lookup steps). Variable lookup for `:x` runs in this order: dynamic scope chain → own
+  vars of `ctx.self` → class (common) vars along its chain → `interp.globals`. Also handle Imagine dot syntax `obiekt'polecenie` / `obiekt'zmienna`
   (Imagine uses apostrophe: `ż1'np 50`) — the parser emits it as a single word; the interpreter
   resolves `x'y` by running `y` with `self` = object `x`.
 
@@ -132,7 +143,7 @@ Each prims module exports `export function register(registry) { registry.define(
 ## Graphics (`src/graphics/*`)
 
 Coordinate system: Logo standard — origin at page centre, +y up, heading 0 = north, clockwise
-degrees. Default page 600×400 (Imagine default may differ: see PRIMITYWY.md).
+degrees. Default page `s1` 796×499, white (PRIMITYWY.md §17).
 
 ```js
 // surface.js — drawing backend interface; HeadlessSurface records ops for tests
@@ -147,7 +158,7 @@ export class World {
   constructor({ surface })
   turtles: Turtle[]; objects: Map<normName, LogoObject>; activeTurtles: Turtle[] (the "kto/ktoś" set)
   createTurtle(name?) -> Turtle
-  page: { width, height, background, wrapMode: 'okno'|'zawijaj'|'płot' }
+  page: { width, height, background, wrapMode: 'sklej'|'okno'|'płot'|'odbij' (default 'sklej') }
   speed (0..n) ; async yield() (setTimeout/requestAnimationFrame based, tunable by speed)
   onRender(cb)      // UI subscribes; world calls after state changes (throttled to rAF)
   timers / processes registry used by prims/objects.js
@@ -166,7 +177,7 @@ not onto the drawing layer.
 
 `class LogoObject { name, className, parent (class object or null), vars: Map, procs: Map, events: Map }`.
 Turtles are LogoObjects (Turtle extends LogoObject). Classes are LogoObjects too (prototype
-chain via `parent`). Events (`przyKliknięciu`, `przyNaciśnięciuKlawisza`, timers) are runlists
+chain via `parent`). Events (`gdyKlik`, `gdyKlawisz`, … — see PRIMITYWY.md §13, timers) are runlists
 stored in `events` and run by the world as separate processes.
 
 ## UI
@@ -184,3 +195,7 @@ listing primitives from `registry.names()` with docs.
 export function createLogomocja({ surface, io }) -> { interp, world, registry, run(source), stop(), reset() }
 ```
 Used by both the UI and the tests (tests use HeadlessSurface and a capturing io).
+
+## Conflict resolution
+
+Where this file and `docs/PRIMITYWY.md` §17 (Decyzje implementacyjne) disagree on language behaviour, **PRIMITYWY.md wins**. This file wins on code interfaces.

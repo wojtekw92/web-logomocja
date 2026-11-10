@@ -62,6 +62,12 @@ export function toBool(v, who) {
     const n = normName(v)
     if (n === TRUE || n === 'true') return true
     if (n === FALSE || n === 'false') return false
+    if (n === 'jld' || n === 'any') return Math.random() < 0.5
+  }
+  // Imagine numeric logic: <=0 false, >=1 true, 0<p<1 true with probability p
+  if (isNumeric(v)) {
+    const p = toNumber(v)
+    return p <= 0 ? false : p >= 1 ? true : Math.random() < p
   }
   throw new LogoError(`${who ? who + ': ' : ''}${formatValue(v)} nie jest wartością logiczną`)
 }
@@ -71,7 +77,7 @@ export const fromBool = (b) => (b ? TRUE : FALSE)
 function formatNumber(n) {
   if (Number.isInteger(n)) return String(n)
   if (!Number.isFinite(n)) return String(n)
-  return String(Number(n.toPrecision(10)))
+  return String(Number(n.toPrecision(6)))
 }
 
 /** Print a value like Logo does. top=true: a top-level list prints without outer brackets. */
