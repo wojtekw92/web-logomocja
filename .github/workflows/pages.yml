@@ -37,9 +37,9 @@ jobs:
       - name: Przygotuj pliki strony
         run: |
           mkdir _site
-          cp -r index.html styles.css src examples .nojekyll _site/
+          cp -r index.html styles.css src examples _site/
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
       - id: deployment
